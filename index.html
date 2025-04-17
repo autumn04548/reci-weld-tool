@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RECI 焊接參數查詢工具</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f8f8f8; }
+    select, button { font-size: 16px; padding: 5px; margin: 10px 0; }
+    .result { margin-top: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: pre-line; }
+  </style>
+</head>
+<body>
+  <h2>RECI 焊接參數查詢工具</h2>
+
+  <label>機型：</label>
+  <select id="model" onchange="updateThicknessOptions()">
+    <option value="A120">A120</option>
+    <option value="A150">A150</option>
+    <option value="A200">A200</option>
+  </select><br />
+
+  <label>焊接型態：</label>
+  <select id="mode" onchange="updateThicknessOptions()">
+    <option value="wire">送絲</option>
+    <option value="nowire">不送絲</option>
+  </select><br />
+
+  <label>材料：</label>
+  <select id="material" onchange="updateThicknessOptions()">
+    <option value="Q235">碳鋼</option>
+    <option value="304">不鏽鋼</option>
+    <option value="Zn">鍍鋅板</option>
+    <option value="Al">鋁</option>
+  </select><br />
+
+  <label>厚度（mm）：</label>
+  <select id="thickness"></select><br />
+
+  <button onclick="queryParams()">查詢參數</button>
+
+  <div class="result" id="output">請選擇條件後點擊查詢。</div>
+
+  <script>
+    const db = {
+      A120: {
+        wire: {
+          Q235: { 1: '50Hz, 50–60%, 50cm/min', 2: '50Hz, 75–80%', 3: '50Hz, 95%, 40cm/min' },
+          304: { 1: '50Hz, 50–60%, 50cm/min', 2: '40–50Hz, 75–80%', 3: '30Hz, 100%, 30cm/min' },
+          Al: { 1: '70Hz, 55%, 60cm/min', 2: '45–50Hz, 85%', 3: '35Hz, 100%' }
+        },
+        nowire: {
+          Q235: { 1: '35Hz, 40%', 2: '35Hz, 65%', 3: '35Hz, 95%' },
+          304: { 1: '50Hz, 40%', 2: '35Hz, 65%', 3: '35Hz, 95%' },
+          Al: { 1: '50Hz, 40%', 2: '35Hz, 65%', 3: '35Hz, 95%' }
+        }
+      },
+      A150: {
+        wire: {
+          Q235: { 1: '80Hz, 26–30%, 50–60cm/min', 2: '60Hz, 55–70%', 3: '100Hz, 70–80%' },
+          304: { 1: '50Hz, 35%, 80cm/min', 2: '40–50Hz, 55–60%, 75cm/min', 3: '40–50Hz, 50–80%, 70cm/min' },
+          Al: { 1: '80Hz, 35–40%, 80cm/min', 2: '80Hz, 75–80%', 3: '45Hz, 85–90%' }
+        },
+        nowire: {
+          Q235: { 1: '80Hz, 15–20%', 2: '80Hz, 60–75%', 3: '80Hz, 80%' },
+          304: { 1: '50Hz, 50%', 2: '40–50Hz, 65%', 3: '30–40Hz, 85%' },
+          Al: { 1: '40–50Hz, 30–35%', 2: '60Hz, 60%', 3: '70–75Hz, 75–85%' }
+        }
+      },
+      A200: {
+        wire: {
+          Q235: { 2: '30–50Hz, 30–40%, 50–60cm/min', 3: '40–60Hz, 55–60%' },
+          304: { 2: '30–50Hz, 30–40%, 50–60cm/min', 3: '40–60Hz, 55–60%' },
+          Al: { 2: '50Hz, 40–45%', 3: '50Hz, 70%' }
+        },
+        nowire: {
+          Q235: { 2: '40–45Hz, 30–35%', 3: '50Hz, 55%' },
+          304: { 2: '40–45Hz, 30–35%', 3: '50Hz, 55%' },
+          Zn: { 2: '40–45Hz, 30–35%', 3: '50Hz, 55%' }
+        }
+      }
+    };
+
+    function getWireDiameter(thick) {
+      const t = parseFloat(thick);
+      if (t <= 1.5) return '0.8 mm';
+      if (t <= 2.5) return '1.0 mm';
+      if (t <= 4.0) return '1.2 mm';
+      return '1.6 mm';
+    }
+
+    function getSwingRange(thick) {
+      const t = parseFloat(thick);
+      if (t <= 1.5) return '1.5–2.5 mm';
+      if (t <= 2.5) return '2.5–3.5 mm';
+      if (t <= 4.0) return '3.5–4.5 mm';
+      return '4.5–6.0 mm';
+    }
+
+    function updateThicknessOptions() {
+      const model = document.getElementById('model').value;
+      const mode = document.getElementById('mode').value;
+      const mat = document.getElementById('material').value;
+      const thickSelect = document.getElementById('thickness');
+      thickSelect.innerHTML = '';
+      const data = db[model]?.[mode]?.[mat];
+      if (data) {
+        Object.keys(data).forEach(t => {
+          const option = document.createElement('option');
+          option.value = t;
+          option.text = t;
+          thickSelect.appendChild(option);
+        });
+      } else {
+        const option = document.createElement('option');
+        option.value = '';
+        option.text = '無可用厚度';
+        thickSelect.appendChild(option);
+      }
+    }
+
+    function queryParams() {
+      const model = document.getElementById('model').value;
+      const mode = document.getElementById('mode').value;
+      const mat = document.getElementById('material').value;
+      const thick = document.getElementById('thickness').value;
+      const result = db[model]?.[mode]?.[mat]?.[thick];
+      const swing = thick ? getSwingRange(thick) : null;
+      const wire = (mode === 'wire' && thick) ? getWireDiameter(thick) : null;
+
+      let output = result ? `${result}\n建議擺幅：${swing}` : '此組合暫無資料';
+      if (wire) output += `\n建議送絲線徑：${wire}`;
+      document.getElementById('output').innerText = output;
+    }
+
+    window.addEventListener('DOMContentLoaded', updateThicknessOptions);
+  </script>
+</body>
+</html>
