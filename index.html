@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>RECI A200 查詢工具（最新版）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f8f8f8; }
+    select, button { font-size: 16px; padding: 5px; margin: 6px 0; }
+    .result { margin-top: 20px; padding: 15px; background: #fff; border-radius: 8px; white-space: pre-line; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <h2>RECI A200 焊接參數查詢工具（資料更新）</h2>
+
+  <label>模式：</label>
+  <select id="mode">
+    <option value="wire">送絲</option>
+    <option value="nowire">不送絲</option>
+  </select><br/>
+
+  <label>材料：</label>
+  <select id="material">
+    <option>碳鋼</option>
+    <option>鍍鋅板</option>
+    <option>不鏽鋼</option>
+    <option>鋁</option>
+    <option>黃銅</option>
+  </select><br/>
+
+  <label>厚度（mm）：</label>
+  <select id="thickness">
+    <option>1</option><option>2</option><option>2.5</option>
+    <option>3</option><option>4</option><option>5</option><option>6</option>
+  </select><br/>
+
+  <button onclick="query()">查詢參數</button>
+
+  <div class="result" id="output">請選擇條件後點擊查詢。</div>
+
+  <script>
+    const db = {
+  "wire": {
+    "碳鋼": {
+      "1": "擺幅：2–4mm\n擺頻：60–70Hz\n功率：25%\n送絲：50 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：30–50Hz\n功率：30–40%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：30–40Hz\n功率：50–55%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：40–60Hz\n功率：55–60%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：40Hz\n功率：70%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：30Hz\n功率：100%\n送絲：40 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min"
+    },
+    "鍍鋅板": {
+      "1": "擺幅：2–4mm\n擺頻：60–70Hz\n功率：25%\n送絲：50 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：30–50Hz\n功率：30–40%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：30–50Hz\n功率：50–55%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：40–60Hz\n功率：55–60%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：40Hz\n功率：70%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：30Hz\n功率：100%\n送絲：40 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min"
+    },
+    "不鏽鋼": {
+      "1": "擺幅：2–4mm\n擺頻：60–70Hz\n功率：25%\n送絲：50 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：30–50Hz\n功率：30–40%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：30–40Hz\n功率：50–55%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：40–60Hz\n功率：55–60%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：40Hz\n功率：70%\n送絲：50–60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：30Hz\n功率：100%\n送絲：40 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "6": "擺幅：2–4mm\n擺頻：30Hz\n功率：100%\n送絲：30 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min"
+    },
+    "鋁": {
+      "1": "擺幅：2–4mm\n擺頻：50Hz\n功率：25–30%\n送絲：70 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：50Hz\n功率：40–45%\n送絲：70 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：50Hz\n功率：55–60%\n送絲：70 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：50Hz\n功率：70%\n送絲：70 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：50Hz\n功率：95–100%\n送絲：70 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：50Hz\n功率：50–55\n送絲：70 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min\n焊白"
+    },
+    "黃銅": {
+      "1": "擺幅：2–4mm\n擺頻：60Hz\n功率：30–35%\n送絲：45 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：60Hz\n功率：50%\n送絲：45 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：60Hz\n功率：50%\n送絲：45 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：40Hz\n功率：50–60%\n送絲：60 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：40Hz\n功率：60%\n送絲：60–65 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：60Hz\n功率：75%\n送絲：80 cm/min\n焊絲直徑：1.0 mm\n氣體：14–20 L/min"
+    }
+  },
+  "nowire": {
+    "碳鋼": {
+      "1": "擺幅：2–4mm\n擺頻：40Hz\n功率：25%\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：40–45Hz\n功率：30–35%\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：40–50Hz\n功率：40–50%\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：40–50Hz\n功率：50–55%\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：50–60Hz\n功率：55–75%\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：40–50Hz\n功率：80–90%\n氣體：14–20 L/min",
+      "6": "擺幅：2–4mm\n擺頻：30Hz\n功率：90–100%\n氣體：14–20 L/min"
+    },
+    "鍍鋅板": {
+      "1": "擺幅：2–4mm\n擺頻：40Hz\n功率：25%\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：40–45Hz\n功率：30–35%\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：40–50Hz\n功率：40–45%\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：40–50Hz\n功率：50–55%\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：50–60Hz\n功率：55–75%\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：40–50Hz\n功率：80–90%\n氣體：14–20 L/min"
+    },
+    "不鏽鋼": {
+      "1": "擺幅：2–4mm\n擺頻：40Hz\n功率：25%\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：40–45Hz\n功率：30–35%\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：40–50Hz\n功率：40–50%\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：40–50Hz\n功率：50–55%\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：40–60Hz\n功率：55–75%\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：40–50Hz\n功率：80–90%\n氣體：14–20 L/min",
+      "6": "擺幅：2–4mm\n擺頻：30Hz\n功率：100%\n氣體：14–20 L/min"
+    },
+    "鋁": {
+      "1": "擺幅：2–4mm\n擺頻：30Hz\n功率：25%\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：30Hz\n功率：40%\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：50–60Hz\n功率：45–55%\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：60–70Hz\n功率：60–75%\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：60–70Hz\n功率：80–90%\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：60–70Hz\n功率：95–100%\n氣體：14–20 L/min"
+    },
+    "黃銅": {
+      "1": "擺幅：2–4mm\n擺頻：50–60Hz\n功率：25%\n氣體：14–20 L/min",
+      "2": "擺幅：2–4mm\n擺頻：50–60Hz\n功率：40–50%\n氣體：14–20 L/min",
+      "2.5": "擺幅：2–4mm\n擺頻：50–60Hz\n功率：40–50%\n氣體：14–20 L/min",
+      "3": "擺幅：2–4mm\n擺頻：50–60Hz\n功率：60–70%\n氣體：14–20 L/min",
+      "4": "擺幅：2–4mm\n擺頻：50Hz\n功率：80–90H%\n氣體：14–20 L/min",
+      "5": "擺幅：2–4mm\n擺頻：50Hz\n功率：90–95%\n氣體：14–20 L/min"
+    }
+  }
+};
+
+    function query() {
+      const mode = document.getElementById("mode").value;
+      const material = document.getElementById("material").value;
+      const thickness = document.getElementById("thickness").value;
+      const param = db?.[mode]?.[material]?.[thickness];
+      document.getElementById("output").innerText = param || "查無資料，請確認選項。";
+    }
+  </script>
+</body>
+</html>
