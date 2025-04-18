@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>RECI 多機型焊接參數查詢工具</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+    select, button { font-size: 16px; padding: 5px; margin: 5px 0; }
+    .result { margin-top: 20px; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); white-space: pre-line; }
+  </style>
+</head>
+<body>
+  <h2>RECI 多機型焊接參數查詢工具</h2>
+
+  <label>機型：</label>
+  <select id="model">
+    <option>A120</option>
+    <option>A150</option>
+    <option>A200</option>
+  </select>
+
+  <label>模式：</label>
+  <select id="mode">
+    <option value="wire">送絲</option>
+    <option value="nowire">不送絲</option>
+  </select>
+
+  <label>型態：</label>
+  <select id="type">
+    <option>熔透</option>
+    <option>焊白</option>
+    <option>平滑焊</option>
+  </select>
+
+  <label>材料：</label>
+  <select id="material">
+    <option>碳鋼</option>
+    <option>鍍鋅板</option>
+    <option>不鏽鋼</option>
+    <option>鋁</option>
+    <option>黃銅</option>
+  </select>
+
+  <label>厚度（mm）：</label>
+  <select id="thickness">
+    <option>1.5</option>
+    <option>2</option>
+    <option>2.5</option>
+    <option>3</option>
+  </select>
+
+  <button onclick="query()">查詢參數</button>
+
+  <div class="result" id="output">請選擇條件後點擊查詢。</div>
+
+  <script>
+    const db = {
+      A120: {
+        wire: {
+          "熔透": {
+            "碳鋼": {
+              2: "擺幅：2–4mm\n擺頻：40–50Hz\n功率：55%\n送絲：60 cm/min\n焊絲直徑：1.0 mm\n氣體：15 L/min"
+            }
+          },
+          "焊白": {
+            "碳鋼": {
+              3: "擺幅：2–4mm\n擺頻：45Hz\n功率：70%\n送絲：80 cm/min\n焊絲直徑：1.0 mm\n氣體：15 L/min"
+            }
+          }
+        },
+        nowire: {
+          "平滑焊": {
+            "不鏽鋼": {
+              2.5: "擺幅：2mm\n擺頻：50Hz\n功率：60%\n氣體：15 L/min"
+            }
+          }
+        }
+      },
+      A150: {
+        wire: {
+          "平滑焊": {
+            "不鏽鋼": {
+              2.5: "擺幅：2mm\n擺頻：55Hz\n功率：65%\n送絲：70 cm/min\n焊絲直徑：1.0 mm\n氣體：16 L/min"
+            },
+            "黃銅": {
+              1.5: "擺幅：2mm\n擺頻：45Hz\n功率：55%\n送絲：60 cm/min\n焊絲直徑：0.8 mm\n氣體：15 L/min"
+            }
+          }
+        }
+      },
+      A200: {
+        wire: {
+          "熔透": {
+            "鋁": {
+              3: "擺幅：3mm\n擺頻：50Hz\n功率：75%\n送絲：90 cm/min\n焊絲直徑：1.2 mm\n氣體：18 L/min"
+            }
+          }
+        },
+        nowire: {
+          "焊白": {
+            "鍍鋅板": {
+              2: "擺幅：2mm\n擺頻：40Hz\n功率：50%\n氣體：14 L/min"
+            }
+          }
+        }
+      }
+    };
+
+    function query() {
+      const m = document.getElementById("model").value;
+      const mode = document.getElementById("mode").value;
+      const t = document.getElementById("type").value;
+      const mat = document.getElementById("material").value;
+      const thick = parseFloat(document.getElementById("thickness").value);
+      const result = db?.[m]?.[mode]?.[t]?.[mat]?.[thick];
+
+      document.getElementById("output").innerText = result || "查無對應參數，請確認條件是否正確";
+    }
+  </script>
+</body>
+</html>
